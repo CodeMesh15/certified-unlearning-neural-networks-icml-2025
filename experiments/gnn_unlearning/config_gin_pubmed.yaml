@@ -1,0 +1,63 @@
+# GNN Certified Unlearning Configuration - GIN on Pubmed
+
+experiment_name: "gin_pubmed_certified_unlearning"
+seed: 42
+save_every: 10
+
+model:
+  name: "gin"
+  n_classes: 3
+  hidden_dims: [64, 64, 32]
+  dropout_rate: 0.5
+  epsilon: 0.0
+  learn_epsilon: false
+  pooling: "sum"  # For graph-level tasks
+
+dataset:
+  name: "pubmed"
+  data_dir: "./data"
+  batch_size: 1
+  forget_ratio: 0.05  # Smaller forget ratio for larger dataset
+  input_shape: [19717, 500]
+  normalize_adj: true
+
+training:
+  epochs: 300
+  optim: "Adam"
+  max_lr: 0.01
+  lr_schedule: "cos"
+  weight_decay: 1.0e-4
+
+unlearning:
+  algorithm: "iteration"
+  epochs: 150
+  optim: "Adam"
+  max_lr: 0.01
+  lr_schedule: "constant"
+  weight_decay: 1.0e-4
+  init_model_clip: 20.0
+  init_sigma: 0.8
+  delta: 1.0e-6
+  fine_grained_validation: true
+  
+  iteration:
+    epsilon_renyi_target: 0.3
+    grad_clip: 0.15
+    calc_intermediate_eps_renyi: true
+
+post_unlearning:
+  epochs: 75
+  optim: "Adam"
+  max_lr: 0.005
+  lr_schedule: "cos"
+  weight_decay: 1.0e-4
+  post_unlearn_clip: 20.0
+
+adaptive_privacy:
+  enabled: true
+  mechanism: "decaying"
+  sensitivity: 0.15
+  decay_rate: 0.93
+
+checkpoint_path: "./checkpoints/gin_pubmed"
+use_pretrained: false
