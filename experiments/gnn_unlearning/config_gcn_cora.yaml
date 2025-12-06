@@ -1,0 +1,98 @@
+# GNN Certified Unlearning Configuration - GCN on Cora
+
+# Experiment settings
+experiment_name: "gcn_cora_certified_unlearning"
+seed: 42
+save_every: 10
+
+# Model configuration
+model:
+  name: "gcn"
+  n_classes: 7
+  hidden_dims: [64, 32]
+  dropout_rate: 0.5
+
+# Dataset configuration
+dataset:
+  name: "cora"
+  data_dir: "./data"
+  batch_size: 1  # Full graph training
+  forget_ratio: 0.1  # 10% of training data to forget
+  input_shape: [2708, 1433]  # num_nodes x num_features
+  normalize_adj: true
+
+# Training configuration
+training:
+  epochs: 200
+  optim: "Adam"
+  max_lr: 0.01
+  lr_schedule: "constant"
+  weight_decay: 5.0e-4
+  momentum: 0.9
+  dp_sgd: false
+
+# Unlearning configuration
+unlearning:
+  algorithm: "iteration"  # Options: iteration, contractive_coefficients, dp-baseline, retrain, dp-sgd
+  epochs: 100
+  optim: "Adam"
+  max_lr: 0.01
+  lr_schedule: "constant"
+  weight_decay: 5.0e-4
+  init_model_clip: 10.0
+  init_model_clip_type: "clip"  # clip or clamp
+  init_sigma: 0.5
+  delta: 1.0e-5
+  fine_grained_validation: true
+  
+  # PABI (Privacy Amplification by Iteration) settings
+  iteration:
+    epsilon_renyi_target: 0.5
+    grad_clip: 0.1
+    calc_intermediate_eps_renyi: true
+  
+  # Contractive coefficients settings
+  contractive_coefficients:
+    epsilon_target: 1.0
+    sigma: 0.1
+    model_clip: 5.0
+    grad_clip: 0.1
+    noise_addition_after_projection: false
+    noise_addition_before_projection: true
+  
+  # DP-Baseline settings
+  dp-baseline:
+    epsilon_target: 1.0
+  
+  # Retrain settings
+  retrain:
+    start_from_all_zeros: false
+    clip_and_noise: true
+
+# Post-unlearning fine-tuning
+post_unlearning:
+  epochs: 50
+  optim: "Adam"
+  max_lr: 0.005
+  lr_schedule: "constant"
+  weight_decay: 5.0e-4
+  post_unlearn_clip: 10.0
+
+# Adaptive privacy settings (optional)
+adaptive_privacy:
+  enabled: true
+  mechanism: "loss_adaptive"  # Options: uniform, decaying, increasing, loss_adaptive, grad_norm_adaptive
+  sensitivity: 1.0
+  decay_rate: 0.95  # For decaying mechanism
+  growth_rate: 1.05  # For increasing mechanism
+  smoothing: 0.9  # For adaptive mechanisms
+
+# Checkpoint settings
+checkpoint_path: "./checkpoints/gcn_cora"
+use_pretrained: false  # Set to checkpoint path to load pretrained model
+
+# Logging
+wandb:
+  project: "certified-unlearning-gnn"
+  entity: "your-username"
+  mode: "online"  # online, offline, disabled
